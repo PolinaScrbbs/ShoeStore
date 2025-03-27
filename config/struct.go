@@ -1,6 +1,10 @@
 package config
 
 type Config struct {
-	SUPABASE_URL string
-	SUPABASE_KEY string
+	USER        string
+	PASSWORD    string
+	HOST        string
+	PORT        string
+	DB_NAME     string
+	DatabaseUrl string
 }
