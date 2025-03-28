@@ -3,14 +3,18 @@ package queries
 import (
 	"ShoeStore/database/models"
 	"context"
-	"github.com/jackc/pgx/v5"
-	"log"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetAllSneakers(conn *pgx.Conn) ([]models.Sneaker, error) {
+func GetAllSneakers(pool *pgxpool.Pool) ([]models.Sneaker, error) {
+	conn, err := pool.Acquire(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Release()
+
 	rows, err := conn.Query(context.Background(), "SELECT id, title, description, price, created_at FROM sneakers")
 	if err != nil {
-		log.Printf("Ошибка запроса: %s", err)
 		return nil, err
 	}
 	defer rows.Close()

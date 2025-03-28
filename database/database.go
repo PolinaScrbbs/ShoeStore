@@ -3,39 +3,30 @@ package database
 import (
 	"ShoeStore/database/queries/creation"
 	"context"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
 	"time"
 )
 
-func NewDBConnection(url string) *pgx.Conn {
-	conn, err := pgx.Connect(context.Background(), url)
-	if err != nil {
-		logrus.Fatalf("Не удалось подключиться к базе данных: %w", err)
-	}
-	return conn
-}
-
-func CreateTable(conn *pgx.Conn, tableName string, query string) {
-	_, err := conn.Exec(context.Background(), query)
-	if err != nil {
-		logrus.Fatalf("Ошибка выполнения запроса: %v", err)
-	}
-	logrus.Infof("Таблица %s успешно создана или уже существует.", tableName)
-}
+var DB *pgxpool.Pool
 
 func InitDB(url *string) {
-	conn := NewDBConnection(*url)
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
+	pool, err := pgxpool.New(context.Background(), *url)
+	if err != nil {
+		logrus.Fatalf("Ошибка подключения к базе данных: %v", err)
+	}
+
+	DB = pool
+
+	go func() {
+		_, err := DB.Exec(context.Background(), creation.CreateSneakersTableSQL)
 		if err != nil {
-			logrus.Fatalf("Ошибка закрытия подключения к базе данных: %v", err)
+			logrus.Fatalf("Ошибка создания таблицы: %v", err)
 		}
-	}(conn, context.Background())
+		logrus.Infoln("Таблица успешно создана или уже существует.")
+	}()
 
-	go CreateTable(conn, creation.TableName, creation.CreateSneakersTableSQL)
+	time.Sleep(2 * time.Second)
 
-	time.Sleep(5 * time.Second)
-
-	logrus.Infoln("Инициализация БД успешна завершена")
+	logrus.Infoln("Инициализация БД успешно завершена")
 }
