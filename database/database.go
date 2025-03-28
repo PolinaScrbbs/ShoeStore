@@ -24,9 +24,14 @@ func CreateTable(conn *pgx.Conn, tableName string, query string) {
 	logrus.Infof("Таблица %s успешно создана или уже существует.", tableName)
 }
 
-func InitDB(url string) {
-	conn := NewDBConnection(url)
-	defer conn.Close(context.Background())
+func InitDB(url *string) {
+	conn := NewDBConnection(*url)
+	defer func(conn *pgx.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+			logrus.Fatalf("Ошибка закрытия подключения к базе данных: %v", err)
+		}
+	}(conn, context.Background())
 
 	go CreateTable(conn, creation.TableName, creation.CreateSneakersTableSQL)
 

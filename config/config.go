@@ -8,7 +8,7 @@ import (
 )
 
 func InitConfig() (*Config, error) {
-	err := godotenv.Load()
+	err := godotenv.Load("../.env")
 	if err != nil {
 		return nil, errors.New("Не удалось загрузить .env файл, используются переменные окружения")
 	}
